@@ -1,8 +1,99 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AQUANEX Physics Digital Twin</title><link rel="stylesheet" href="style.css"></head><body><div class="app"><aside><div class="brand"><b>AQ</b><span>AQUANEX<small>Water Intelligence</small></span></div><nav><button class="active" data-p="dashboard">◉ Digital Twin</button><button data-p="physics">⌁ Process Physics</button><button data-p="analytics">▥ Analytics</button><button data-p="events">≡ Event Log</button></nav><footer>● Simulation engine online<br><small>v2.0 • SIH prototype</small></footer></aside><main><header><div><label>SMART WATER MANAGEMENT • HARDWARE DIGITAL TWIN</label><h1>AQUANEX Control Center</h1></div><button id="run">▶ Run Cycle</button></header>
-<section id="dashboard" class="page active"><div class="top"><article class="card"><small>SYSTEM DECISION <em id="badge">READY</em></small><h2 id="decision">Ready for source-water characterization</h2><div class="meta">Controller: <b>ESP32 Edge Logic</b> · Mode: <b>Closed-loop</b></div><div class="confidence">Safety confidence <strong id="conf">—</strong></div></article><article class="card"><small>OUTPUT TANK <em id="tankbadge">LOCKED</em></small><div class="tankrow"><div class="tank"><i id="fill"></i></div><strong id="vol">0.00 L</strong></div><div class="meta">Flow <b id="flow">2.00 L/min</b> · Energy <b id="energy">0 Wh</b></div></article></div>
-<article class="card pipeline"><small>LIVE PROCESS PIPELINE <span id="phase">Standby</span></small><div class="steps"><div>SENSE<small>Water quality</small></div><i>→</i><div>PURIFY<small>Removal kinetics</small></div><i>→</i><div>VERIFY<small>Post-treatment</small></div><i>→</i><div>RELEASE<small>Fail-safe gate</small></div></div><progress id="prog" value="0" max="100"></progress></article>
-<h3>Source-water telemetry <span id="scenarioLabel">Clean source</span></h3><div id="sensors" class="grid"></div>
-<div class="twocol"><article class="card"><small>SIMULATION SCENARIOS</small><div class="buttons"><button class="scenario active" data-s="clean">Clean</button><button class="scenario" data-s="mining">Mining-affected</button><button class="scenario" data-s="failure">Verify failure</button><button class="scenario" data-s="storm">Storm runoff</button></div><label>Source flow <b id="flowv">2.00 L/min</b></label><input id="slider" type="range" min=".5" max="4.5" step=".1" value="2"></article><article class="card"><small>ACTUATORS</small><div id="acts"></div></article></div></section>
-<section id="physics" class="page"><h3>Process physics</h3><div class="grid physics"><article class="card"><b>Mass balance</b><strong>Cout = Cin e<sup>−kτ</sup></strong><p>First-order removal; residence time τ = chamber volume / flow.</p></article><article class="card"><b>UV dose</b><strong>D = I × t</strong><p>Effective UV irradiance is reduced when water clarity falls; flow controls exposure time.</p></article><article class="card"><b>Hydraulics</b><strong>ΔP ∝ Q² + loading</strong><p>Pressure loss rises with flow and accumulated filter loading.</p></article><article class="card"><b>Decision gate</b><strong>Sense → Treat → Verify</strong><p>Output is released only when simulated post-treatment checks pass.</p></article></div><article class="card model"><h3>Model transparency</h3><p>UV dose is calculated from irradiance × exposure time. Turbidity reduces effective UV transmittance, so a dirty source can require lower flow or more UV exposure. Treatment stages use simplified first-order removal kinetics. The metal value is an electrochemical signal index, not a laboratory concentration.</p><p><b>Prototype only:</b> real deployment needs calibrated sensors, measured media coefficients, pump/filter curves, UV validation and laboratory testing.</p></article></section>
-<section id="analytics" class="page"><h3>Live analytics</h3><div class="analytics"><article class="card"><small>RAW VS POST-TREATMENT TURBIDITY</small><canvas id="chart"></canvas></article><article class="card metrics"><div>Residence time<b id="rt">—</b></div><div>UV dose<b id="uv">—</b></div><div>Filter ΔP<b id="dp">—</b></div><div>Estimated power<b id="pw">—</b></div></article></div></section>
-<section id="events" class="page"><h3>Event log</h3><article class="card" id="log"></article></section><p class="bottom">AQUANEX • Closed-loop sensing → treatment → verification → safe release / lockout</p></main></div><script src="script.js"></script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AQUANEX — Intelligent Water Purification Digital Twin</title><link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="shell">
+<aside>
+  <div class="brand"><div class="logo">AQ</div><div><b>AQUANEX</b><small>Intelligent Water Purification</small></div></div>
+  <button class="nav active" data-page="twin">◉ <span>Digital Twin</span></button>
+  <button class="nav" data-page="process">⌁ <span>Treatment Process</span></button>
+  <button class="nav" data-page="history">▥ <span>Test History</span></button>
+  <div class="side-status"><i></i> SIMULATION ONLINE<br><small>Closed-loop treatment model</small></div>
+</aside>
+
+<main>
+<header>
+ <div><small class="kicker">SMART WATER MANAGEMENT • SIMULATION ONLY</small><h1>AQUANEX <span>Digital Twin</span></h1></div>
+ <div class="head-right"><span id="time"></span><button id="run" class="run">▶ START TEST</button></div>
+</header>
+
+<section id="twin" class="page active">
+ <div class="status-banner" id="banner"><div class="status-icon">✓</div><div><small>SYSTEM STATUS</small><strong id="statusTitle">READY FOR WATER TEST</strong><span id="statusSub">Select a source condition and start the simulated treatment cycle.</span></div><em id="statusBadge">READY</em></div>
+
+ <div class="main-grid">
+  <article class="card water-card">
+   <div class="card-head"><b>WATER QUALITY TEST</b><span id="sourceName">Clean source</span></div>
+   <div class="water-test">
+    <div class="big-water"><div class="water-orb"></div><b id="quality">GOOD</b><small>source condition</small></div>
+    <div class="test-list" id="tests"></div>
+   </div>
+  </article>
+  <article class="card decision-card">
+   <div class="card-head"><b>AI / EDGE DECISION</b><span>ESP32</span></div>
+   <div class="decision-box"><small>CURRENT ACTION</small><strong id="action">Waiting for test</strong><p id="reason">The controller will select treatment intensity according to the simulated water condition.</p></div>
+   <div class="gate"><span>Safety gate</span><b id="gate">LOCKED</b></div>
+  </article>
+ </div>
+
+ <article class="card pipeline-card">
+  <div class="card-head"><b>LIVE PURIFICATION LINE</b><span id="phase">Standby</span></div>
+  <div class="plant">
+   <div class="stage" data-s="intake"><div class="icon">01</div><b>INTAKE</b><small>Raw water</small></div><i>→</i>
+   <div class="stage" data-s="screen"><div class="icon">02</div><b>SCREEN</b><small>Debris removal</small></div><i>→</i>
+   <div class="stage" data-s="coag"><div class="icon">03</div><b>COAGULATION</b><small>Particle capture</small></div><i>→</i>
+   <div class="stage" data-s="filter"><div class="icon">04</div><b>MEDIA FILTER</b><small>Sand / carbon</small></div><i>→</i>
+   <div class="stage" data-s="polish"><div class="icon">05</div><b>POLISH</b><small>Fine filtration</small></div><i>→</i>
+   <div class="stage" data-s="uv"><div class="icon">06</div><b>UV DISINFECTION</b><small>Microbial barrier</small></div><i>→</i>
+   <div class="stage" data-s="verify"><div class="icon">07</div><b>VERIFY</b><small>Final quality</small></div><i>→</i>
+   <div class="stage" data-s="release"><div class="icon">08</div><b>RELEASE</b><small>Safe / lockout</small></div>
+  </div>
+  <div class="bar"><div id="progress"></div></div>
+ </article>
+
+ <div class="lower">
+  <article class="card scenario-card">
+   <div class="card-head"><b>SIMULATION INPUT</b><span>Choose test water</span></div>
+   <div class="scenarios">
+    <button class="scenario active" data-s="clean"><b>Clean</b><small>Normal source</small></button>
+    <button class="scenario" data-s="mining"><b>Mining affected</b><small>High TDS / turbidity</small></button>
+    <button class="scenario" data-s="storm"><b>Storm runoff</b><small>High turbidity</small></button>
+    <button class="scenario" data-s="metal"><b>Metal alert</b><small>Priority-metal signal</small></button>
+   </div>
+   <label class="flow">Flow rate <b id="flowValue">2.00 L/min</b></label><input id="flow" type="range" min=".5" max="4" step=".1" value="2">
+  </article>
+  <article class="card tank-card">
+   <div class="card-head"><b>PROCESSED WATER</b><span id="tankState">ISOLATED</span></div>
+   <div class="tank-area"><div class="tank"><i id="tankFill"></i></div><div><strong id="litres">0.00 L</strong><small>simulated output</small></div></div>
+   <div class="mini"><span>Energy <b id="energy">0 Wh</b></span><span>Flow <b id="liveFlow">0 L/min</b></span></div>
+  </article>
+ </div>
+
+ <div class="alerts" id="alerts"></div>
+</section>
+
+<section id="process" class="page">
+ <div class="page-title"><h2>Treatment Process</h2><span>Interactive process model</span></div>
+ <div class="methods">
+  <article class="method card"><div class="mnum">01</div><h3>Screening</h3><p>Removes larger suspended debris before finer treatment stages.</p></article>
+  <article class="method card"><div class="mnum">02</div><h3>Coagulation + Flocculation</h3><p>Destabilizes fine particles so they can form larger flocs for separation.</p></article>
+  <article class="method card"><div class="mnum">03</div><h3>Sedimentation</h3><p>Provides a settling stage in the simulated process for formed solids.</p></article>
+  <article class="method card"><div class="mnum">04</div><h3>Sand / Multimedia Filter</h3><p>Reduces suspended solids and turbidity through depth filtration.</p></article>
+  <article class="method card"><div class="mnum">05</div><h3>Activated Carbon</h3><p>Represents adsorption-based polishing for selected dissolved organics and taste/odor compounds.</p></article>
+  <article class="method card"><div class="mnum">06</div><h3>Fine / Membrane Polish</h3><p>Represents a configurable fine-barrier stage for additional particulate reduction.</p></article>
+  <article class="method card"><div class="mnum">07</div><h3>UV Disinfection</h3><p>Applies a simulated UV exposure stage; effectiveness depends on exposure and water clarity.</p></article>
+  <article class="method card"><div class="mnum">08</div><h3>Final Verification</h3><p>Checks the treated-water indicators before opening the release gate.</p></article>
+ </div>
+ <article class="card explanation"><h3>How the simulation decides</h3><div class="decision-flow"><span>TEST</span><b>→</b><span>SELECT TREATMENT</span><b>→</b><span>REMOVE</span><b>→</b><span>RE-TEST</span><b>→</b><span>RELEASE / ALERT</span></div><p>AQUANEX is intentionally shown as a closed-loop system: treatment does not automatically mean safe water. The simulated final test must pass before the output valve can open.</p></article>
+</section>
+
+<section id="history" class="page">
+ <div class="page-title"><h2>Test History</h2><span>Simulation audit trail</span></div>
+ <article class="card history" id="historyList"></article>
+</section>
+<footer>AQUANEX • Simulation prototype • Sense → Purify → Verify → Release / Lockout</footer>
+</main></div>
+<script src="script.js"></script>
+</body></html>
